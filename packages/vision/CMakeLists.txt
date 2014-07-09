@@ -44,7 +44,6 @@ if (RAM_WITH_VISION)
 #    ${Boost_REGEX_LIBRARY}
 #    )
 #  if (RAM_WITH_LOGGING)
-#    target_link_libraries(DetectorTest
 #      ram_logging
 #      ram_math
 #      ram_control
