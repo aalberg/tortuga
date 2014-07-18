@@ -56,10 +56,12 @@ public:
 
     virtual ~BasicIMUEstimationModule(){};
 
-
     // the IMU Estimation routine goes here.  
     // it should store the new estimated state in estimatedState.
     virtual void update(core::EventPtr event);
+
+    math::Quaternion getOrientation();
+    math::Vector getAngularRate();
 
 private:
     // any helper functions should be prototyped here
@@ -67,6 +69,8 @@ private:
 
     // any necessary persistent variables should be declared here
     StringSet imuList;
+    math::Quaternion m_estOrientation;
+    math::Vector3 m_estAngularRate;
 
     // filterd and rotated IMU data
     FilteredStateMap m_filteredState;

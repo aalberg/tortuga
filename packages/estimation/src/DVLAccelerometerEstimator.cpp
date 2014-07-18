@@ -1,5 +1,5 @@
 /*
- *Kalman Filter for DVL and Accelerometer
+ * Kalman Filter for DVL and Accelerometer
  */
 
 #include "estimation/include/DVLAccelerometerEstimator.h"

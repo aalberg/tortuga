@@ -175,16 +175,14 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
         mag[2] = m_filteredState[m_cgIMUName]->magZ;
     }
 
-    math::Quaternion estOrientation = math::Quaternion::IDENTITY;
+    m_estOrientation = math::Quaternion::IDENTITY;
     
     if(imuList.find(m_magIMUName) != imuList.end() && magIsCorrupt == false) 
     {
-
         /* If we have the magboom IMU, compute the quaternion from the
          * magnetometer reading from the magboom IMU and the linear
          * acceleration reading from the CG IMU
          */
-
         {
             core::ReadWriteMutex::ScopedReadLock lock(m_stateMutex);
 
@@ -193,7 +191,7 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
             mag[2] = m_filteredState[m_magIMUName]->magZ;
         }
         // LOGGER.info("quatFromMagAccel - With MagBoom");
-        estOrientation = estimation::Utility::quaternionFromMagAccel(mag,accel);
+        m_estOrientation = estimation::Utility::quaternionFromMagAccel(mag,accel);
 
     } 
     else if (!magIsCorrupt)
@@ -205,7 +203,7 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
          */
 
         // LOGGER.info("quatFromMagAccel - Without MagBoom");
-        estOrientation = estimation::Utility::quaternionFromMagAccel(mag,accel);
+        m_estOrientation = estimation::Utility::quaternionFromMagAccel(mag,accel);
 
     } 
     else
@@ -239,7 +237,7 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
             m_estimatedState->getEstimatedOrientation();
 
         // LOGGER.info("quatFromRate - No Boom, Mag Corrupted");
-        estOrientation = estimation::Utility::quaternionFromRate(oldOrientation,
+        m_estOrientation = estimation::Utility::quaternionFromRate(oldOrientation,
                                                                  omega,
                                                                  timestep);
     }
@@ -254,14 +252,16 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
                                  prev[1],
                                  m_filteredState[m_cgIMUName]->accelZ);
 
-    math::Vector3 estAngularRate(m_filteredState[m_cgIMUName]->gyroX,
-                                 m_filteredState[m_cgIMUName]->gyroY,
-                                 m_filteredState[m_cgIMUName]->gyroZ);
+    m_estAngularRate(m_filteredState[m_cgIMUName]->gyroX,
+                     m_filteredState[m_cgIMUName]->gyroY,
+                     m_filteredState[m_cgIMUName]->gyroZ);
 
     // Update local storage of previous orientation and estimator
-    m_estimatedState->setEstimatedOrientation(estOrientation);
+    // 7/10/14 Alex Alberg: Commented out to prevent this module from updating.
+    // updating is done in HeadingKalmanModule.
+    //m_estimatedState->setEstimatedOrientation(m_estOrientation);
     m_estimatedState->setEstimatedLinearAccel(estLinearAccel);
-    m_estimatedState->setEstimatedAngularRate(estAngularRate);
+    //m_estimatedState->setEstimatedAngularRate(estAngularRate);
 
     // Log data directly
     LOGGER.infoStream() << name << " "
@@ -283,8 +283,16 @@ void BasicIMUEstimationModule::update(core::EventPtr event)
                         << newState.gyroX << " " 
                         << newState.gyroY << " "
                         << newState.gyroZ << " "
-                        << estOrientation[0] << " " << estOrientation[1] << " "
-                        << estOrientation[2] << " " << estOrientation[3];
+                        << m_estOrientation[0] << " " << m_estOrientation[1] << " "
+                        << m_estOrientation[2] << " " << m_estOrientation[3];
+}
+
+math::Quaternion getOrientation() {
+    return m_estOrientation;
+}
+
+math::Vector3 getAngularRate() {
+    return m_estAngularRate;
 }
 
 } // namespace estimation
